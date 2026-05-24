@@ -345,7 +345,7 @@ pub async fn claude_api_chat(
             }
         };
         buf.push_str(&String::from_utf8_lossy(&chunk));
-
+        #[allow(clippy::while_let_loop)]
         loop {
             let Some(pos) = buf.find('\n') else { break };
             let line = buf[..pos].trim_end_matches('\r').to_string();
@@ -360,7 +360,9 @@ pub async fn claude_api_chat(
 
             if let Ok(ev) = serde_json::from_str::<serde_json::Value>(data) {
                 match ev["type"].as_str() {
-                    Some("content_block_delta") => {
+                    Some("content_block_delta") =>
+                    {
+                        #[allow(clippy::while_let_loop)]
                         if ev["delta"]["type"] == "text_delta" {
                             if let Some(text) = ev["delta"]["text"].as_str() {
                                 app.emit(&format!("claude-api-delta-{session_id}"), text)
