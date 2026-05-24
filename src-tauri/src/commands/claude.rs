@@ -360,9 +360,8 @@ pub async fn claude_api_chat(
 
             if let Ok(ev) = serde_json::from_str::<serde_json::Value>(data) {
                 match ev["type"].as_str() {
-                    Some("content_block_delta") =>
-                    {
-                        #[allow(clippy::while_let_loop)]
+                    #[allow(clippy::collapsible_match)]
+                    Some("content_block_delta") => {
                         if ev["delta"]["type"] == "text_delta" {
                             if let Some(text) = ev["delta"]["text"].as_str() {
                                 app.emit(&format!("claude-api-delta-{session_id}"), text)
