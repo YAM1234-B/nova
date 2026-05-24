@@ -4,17 +4,17 @@ use std::path::PathBuf;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct SessionBuffer {
-    pub path:        PathBuf,
+    pub path: PathBuf,
     pub cursor_line: usize,
-    pub cursor_col:  usize,
-    pub scroll_top:  usize,
+    pub cursor_col: usize,
+    pub scroll_top: usize,
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct Session {
-    pub buffers:       Vec<SessionBuffer>,
+    pub buffers: Vec<SessionBuffer>,
     pub active_buffer: usize,
-    pub working_dir:   PathBuf,
+    pub working_dir: PathBuf,
 }
 
 impl Session {

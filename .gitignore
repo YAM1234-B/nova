@@ -5,3 +5,6 @@ Cargo.lock
 
 # Vercel build output
 .vercel
+
+node_modules/
+dist/

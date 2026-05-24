@@ -23,11 +23,11 @@ impl EditOp {
         match self {
             EditOp::Insert { char_idx, text } => EditOp::Delete {
                 char_idx: *char_idx,
-                text:      text.clone(),
+                text: text.clone(),
             },
             EditOp::Delete { char_idx, text } => EditOp::Insert {
                 char_idx: *char_idx,
-                text:      text.clone(),
+                text: text.clone(),
             },
         }
     }

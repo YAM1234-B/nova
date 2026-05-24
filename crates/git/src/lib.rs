@@ -12,8 +12,8 @@ pub use status::{FileStatus, FileStatusKind, StatusManager};
 
 #[derive(Debug, Clone)]
 pub struct LogEntry {
-    pub oid:     String,
+    pub oid: String,
     pub message: String,
-    pub author:  String,
-    pub time:    i64,
+    pub author: String,
+    pub time: i64,
 }

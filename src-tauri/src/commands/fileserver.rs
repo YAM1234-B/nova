@@ -21,20 +21,20 @@ fn servers() -> &'static Mutex<HashMap<u16, JoinHandle<()>>> {
 fn mime_for(path: &std::path::Path) -> &'static str {
     match path.extension().and_then(|e| e.to_str()).unwrap_or("") {
         "html" | "htm" => "text/html; charset=utf-8",
-        "css"          => "text/css; charset=utf-8",
-        "js" | "mjs"   => "application/javascript; charset=utf-8",
-        "json"         => "application/json",
-        "svg"          => "image/svg+xml",
-        "png"          => "image/png",
+        "css" => "text/css; charset=utf-8",
+        "js" | "mjs" => "application/javascript; charset=utf-8",
+        "json" => "application/json",
+        "svg" => "image/svg+xml",
+        "png" => "image/png",
         "jpg" | "jpeg" => "image/jpeg",
-        "gif"          => "image/gif",
-        "ico"          => "image/x-icon",
-        "woff"         => "font/woff",
-        "woff2"        => "font/woff2",
-        "ttf"          => "font/ttf",
-        "eot"          => "application/vnd.ms-fontobject",
-        "pdf"          => "application/pdf",
-        _              => "application/octet-stream",
+        "gif" => "image/gif",
+        "ico" => "image/x-icon",
+        "woff" => "font/woff",
+        "woff2" => "font/woff2",
+        "ttf" => "font/ttf",
+        "eot" => "application/vnd.ms-fontobject",
+        "pdf" => "application/pdf",
+        _ => "application/octet-stream",
     }
 }
 
@@ -46,10 +46,9 @@ fn percent_decode(s: &str) -> String {
     let mut i = 0;
     while i < bytes.len() {
         if bytes[i] == b'%' && i + 2 < bytes.len() {
-            if let Ok(n) = u8::from_str_radix(
-                std::str::from_utf8(&bytes[i + 1..i + 3]).unwrap_or(""),
-                16,
-            ) {
+            if let Ok(n) =
+                u8::from_str_radix(std::str::from_utf8(&bytes[i + 1..i + 3]).unwrap_or(""), 16)
+            {
                 out.push(n);
                 i += 3;
                 continue;
@@ -93,8 +92,8 @@ async fn handle_connection(stream: tokio::net::TcpStream, base_dir: PathBuf) {
         .unwrap_or("/")
         .to_owned();
 
-    let decoded  = percent_decode(&raw_path);
-    let rel      = decoded.trim_start_matches('/');
+    let decoded = percent_decode(&raw_path);
+    let rel = decoded.trim_start_matches('/');
     let file_path = if rel.is_empty() {
         base_dir.join("index.html")
     } else {
@@ -103,7 +102,7 @@ async fn handle_connection(stream: tokio::net::TcpStream, base_dir: PathBuf) {
 
     match tokio::fs::read(&file_path).await {
         Ok(content) => {
-            let mime   = mime_for(&file_path);
+            let mime = mime_for(&file_path);
             let header = format!(
                 "HTTP/1.1 200 OK\r\n\
                  Content-Type: {mime}\r\n\
@@ -117,7 +116,7 @@ async fn handle_connection(stream: tokio::net::TcpStream, base_dir: PathBuf) {
             let _ = writer.write_all(&content).await;
         }
         Err(_) => {
-            let body   = b"404 Not Found";
+            let body = b"404 Not Found";
             let header = format!(
                 "HTTP/1.1 404 Not Found\r\nContent-Length: {}\r\n\r\n",
                 body.len()

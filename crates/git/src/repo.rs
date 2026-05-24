@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 pub struct GitRepo {
     pub(crate) repo: Repository,
-    pub workdir:     PathBuf,
+    pub workdir: PathBuf,
 }
 
 impl GitRepo {
@@ -27,13 +27,13 @@ impl GitRepo {
 
         let mut out = Vec::new();
         for item in revwalk.take(limit) {
-            let oid    = item?;
+            let oid = item?;
             let commit = self.repo.find_commit(oid)?;
             out.push(crate::LogEntry {
-                oid:     format!("{:.7}", oid),
+                oid: format!("{:.7}", oid),
                 message: commit.summary().unwrap_or("").to_string(),
-                author:  commit.author().name().unwrap_or("unknown").to_string(),
-                time:    commit.time().seconds(),
+                author: commit.author().name().unwrap_or("unknown").to_string(),
+                time: commit.time().seconds(),
             });
         }
         Ok(out)

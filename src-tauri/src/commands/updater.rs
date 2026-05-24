@@ -87,13 +87,7 @@ pub async fn install_update(
         .download_and_install(
             move |chunk_len, total| {
                 downloaded += chunk_len as u64;
-                let _ = app_emit.emit(
-                    "update://progress",
-                    DownloadProgress {
-                        downloaded,
-                        total,
-                    },
-                );
+                let _ = app_emit.emit("update://progress", DownloadProgress { downloaded, total });
             },
             || {},
         )

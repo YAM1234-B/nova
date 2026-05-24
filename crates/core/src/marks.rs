@@ -6,7 +6,7 @@ use crate::cursor::Position;
 #[derive(Debug, Clone)]
 pub struct Mark {
     pub file: PathBuf,
-    pub pos:  Position,
+    pub pos: Position,
 }
 
 #[derive(Debug, Default)]

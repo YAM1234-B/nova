@@ -20,7 +20,7 @@ type PendingMap = Arc<Mutex<HashMap<u64, oneshot::Sender<Value>>>>;
 #[derive(Debug)]
 pub enum LspEvent {
     Diagnostics {
-        uri:         String,
+        uri: String,
         diagnostics: Vec<Diagnostic>,
     },
     LogMessage(String),
@@ -28,18 +28,18 @@ pub enum LspEvent {
 }
 
 pub struct LspClient {
-    next_id:  u64,
-    stdin:    tokio::process::ChildStdin,
-    pending:  PendingMap,
+    next_id: u64,
+    stdin: tokio::process::ChildStdin,
+    pending: PendingMap,
     _root_uri: String,
 }
 
 impl LspClient {
     /// Spawn the language server and perform `initialize`.
     pub async fn start(
-        argv:       &[String],
-        root_path:  PathBuf,
-        event_tx:   mpsc::Sender<LspEvent>,
+        argv: &[String],
+        root_path: PathBuf,
+        event_tx: mpsc::Sender<LspEvent>,
     ) -> Result<Self> {
         let root_uri = format!(
             "file://{}",
@@ -54,7 +54,7 @@ impl LspClient {
             .spawn()
             .with_context(|| format!("spawning LSP server {:?}", argv))?;
 
-        let stdin  = child.stdin.take().context("LSP stdin")?;
+        let stdin = child.stdin.take().context("LSP stdin")?;
         let stdout = child.stdout.take().context("LSP stdout")?;
 
         let pending: PendingMap = Arc::new(Mutex::new(HashMap::new()));
@@ -65,8 +65,11 @@ impl LspClient {
             let mut reader = BufReader::new(stdout);
             loop {
                 let msg = match read_message(&mut reader).await {
-                    Ok(m)  => m,
-                    Err(e) => { warn!("LSP read error: {e}"); break; }
+                    Ok(m) => m,
+                    Err(e) => {
+                        warn!("LSP read error: {e}");
+                        break;
+                    }
                 };
                 debug!("LSP ← {}", msg);
 
@@ -82,19 +85,25 @@ impl LspClient {
                         "textDocument/publishDiagnostics" => {
                             if let Some(params) = msg.get("params") {
                                 let uri = params["uri"].as_str().unwrap_or("").to_string();
-                                let diags: Vec<Diagnostic> = serde_json::from_value(
-                                    params["diagnostics"].clone(),
-                                )
-                                .unwrap_or_default();
-                                let _ = event_tx.send(LspEvent::Diagnostics { uri, diagnostics: diags }).await;
+                                let diags: Vec<Diagnostic> =
+                                    serde_json::from_value(params["diagnostics"].clone())
+                                        .unwrap_or_default();
+                                let _ = event_tx
+                                    .send(LspEvent::Diagnostics {
+                                        uri,
+                                        diagnostics: diags,
+                                    })
+                                    .await;
                             }
                         }
                         "window/logMessage" => {
-                            let msg_str = msg["params"]["message"].as_str().unwrap_or("").to_string();
+                            let msg_str =
+                                msg["params"]["message"].as_str().unwrap_or("").to_string();
                             let _ = event_tx.send(LspEvent::LogMessage(msg_str)).await;
                         }
                         "window/showMessage" => {
-                            let msg_str = msg["params"]["message"].as_str().unwrap_or("").to_string();
+                            let msg_str =
+                                msg["params"]["message"].as_str().unwrap_or("").to_string();
                             let _ = event_tx.send(LspEvent::ShowMessage(msg_str)).await;
                         }
                         _ => {}
@@ -104,10 +113,12 @@ impl LspClient {
         });
 
         // Keep the child alive
-        tokio::spawn(async move { let _ = child.wait().await; });
+        tokio::spawn(async move {
+            let _ = child.wait().await;
+        });
 
         let mut client = Self {
-            next_id:  1,
+            next_id: 1,
             stdin,
             pending,
             _root_uri: root_uri.clone(),
@@ -139,7 +150,7 @@ impl LspClient {
     // ── Low-level RPC ────────────────────────────────────────────────────────
 
     async fn request(&mut self, method: &str, params: Value) -> Result<Value> {
-        let id  = self.next_id;
+        let id = self.next_id;
         self.next_id += 1;
         let msg = make_request(id, method, params);
         debug!("LSP → {}", msg);
@@ -225,8 +236,8 @@ impl LspClient {
                 }),
             )
             .await?;
-        let locations: Vec<Location> = serde_json::from_value(resp["result"].clone())
-            .unwrap_or_default();
+        let locations: Vec<Location> =
+            serde_json::from_value(resp["result"].clone()).unwrap_or_default();
         Ok(locations)
     }
 
@@ -241,16 +252,12 @@ impl LspClient {
                 }),
             )
             .await?;
-        let locations: Vec<Location> = serde_json::from_value(resp["result"].clone())
-            .unwrap_or_default();
+        let locations: Vec<Location> =
+            serde_json::from_value(resp["result"].clone()).unwrap_or_default();
         Ok(locations)
     }
 
-    pub async fn completion(
-        &mut self,
-        uri: &str,
-        pos: Position,
-    ) -> Result<Vec<CompletionItem>> {
+    pub async fn completion(&mut self, uri: &str, pos: Position) -> Result<Vec<CompletionItem>> {
         let resp = self
             .request(
                 "textDocument/completion",
@@ -283,7 +290,12 @@ impl LspClient {
         Ok(resp["result"].clone())
     }
 
-    pub async fn format_document(&mut self, uri: &str, tab_size: u32, insert_spaces: bool) -> Result<Value> {
+    pub async fn format_document(
+        &mut self,
+        uri: &str,
+        tab_size: u32,
+        insert_spaces: bool,
+    ) -> Result<Value> {
         let resp = self
             .request(
                 "textDocument/formatting",

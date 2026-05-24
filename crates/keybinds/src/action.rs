@@ -63,7 +63,10 @@ pub enum Action {
     SearchNext,
     SearchPrev,
     SearchConfirm(String),
-    ReplaceAll { from: String, to: String },
+    ReplaceAll {
+        from: String,
+        to: String,
+    },
 
     // ── Buffer management ─────────────────────────────────────────────────────
     NextBuffer,

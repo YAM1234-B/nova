@@ -4,10 +4,10 @@ use crate::repo::GitRepo;
 
 #[derive(Debug, Clone)]
 pub struct BranchInfo {
-    pub name:       String,
+    pub name: String,
     pub is_current: bool,
-    pub is_remote:  bool,
-    pub upstream:   Option<String>,
+    pub is_remote: bool,
+    pub upstream: Option<String>,
 }
 
 pub struct BranchManager<'a> {
@@ -107,7 +107,9 @@ impl<'a> BranchManager<'a> {
             .repo
             .find_branch(branch_name, git2::BranchType::Local)
             .with_context(|| format!("finding branch {}", branch_name))?;
-        branch.delete().with_context(|| format!("deleting branch {}", branch_name))?;
+        branch
+            .delete()
+            .with_context(|| format!("deleting branch {}", branch_name))?;
         Ok(())
     }
 }

@@ -23,8 +23,8 @@ impl Config {
         }
         let content = std::fs::read_to_string(&path)
             .with_context(|| format!("reading config from {}", path.display()))?;
-        let config: Self = toml::from_str(&content)
-            .context("parsing config.toml — check for syntax errors")?;
+        let config: Self =
+            toml::from_str(&content).context("parsing config.toml — check for syntax errors")?;
         Ok(config)
     }
 
@@ -49,10 +49,9 @@ impl Config {
         }
         let content = std::fs::read_to_string(&local)
             .with_context(|| format!("reading project config {}", local.display()))?;
-        let ov: Self = toml::from_str(&content)
-            .context("parsing .ted.toml")?;
-        self.editor   = ov.editor;
-        self.theme     = ov.theme;
+        let ov: Self = toml::from_str(&content).context("parsing .ted.toml")?;
+        self.editor = ov.editor;
+        self.theme = ov.theme;
         Ok(())
     }
 }

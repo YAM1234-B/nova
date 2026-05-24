@@ -17,8 +17,8 @@ pub enum FileStatusKind {
 
 #[derive(Debug, Clone)]
 pub struct FileStatus {
-    pub path:   PathBuf,
-    pub kind:   FileStatusKind,
+    pub path: PathBuf,
+    pub kind: FileStatusKind,
     pub staged: bool,
 }
 
@@ -46,8 +46,8 @@ impl<'a> StatusManager<'a> {
 
         let mut out = Vec::new();
         for entry in statuses.iter() {
-            let path   = PathBuf::from(entry.path().unwrap_or(""));
-            let flags  = entry.status();
+            let path = PathBuf::from(entry.path().unwrap_or(""));
+            let flags = entry.status();
 
             let (kind, staged) = if flags.intersects(
                 git2::Status::INDEX_NEW
@@ -97,10 +97,10 @@ impl<'a> StatusManager<'a> {
     /// Stage a specific file path.
     pub fn stage(&self, path: &std::path::Path) -> Result<()> {
         let mut index = self.repo.repo.index().context("opening git index")?;
-        let rel = path
-            .strip_prefix(&self.repo.workdir)
-            .unwrap_or(path);
-        index.add_path(rel).with_context(|| format!("staging {}", rel.display()))?;
+        let rel = path.strip_prefix(&self.repo.workdir).unwrap_or(path);
+        index
+            .add_path(rel)
+            .with_context(|| format!("staging {}", rel.display()))?;
         index.write().context("writing git index")?;
         Ok(())
     }
@@ -109,11 +109,9 @@ impl<'a> StatusManager<'a> {
     pub fn unstage(&self, path: &std::path::Path) -> Result<()> {
         let head = self.repo.repo.head().context("reading HEAD")?;
         let head_commit = head.peel_to_commit().context("peeling HEAD to commit")?;
-        let head_tree   = head_commit.tree().context("getting HEAD tree")?;
+        let head_tree = head_commit.tree().context("getting HEAD tree")?;
 
-        let rel = path
-            .strip_prefix(&self.repo.workdir)
-            .unwrap_or(path);
+        let rel = path.strip_prefix(&self.repo.workdir).unwrap_or(path);
 
         self.repo
             .repo

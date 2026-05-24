@@ -1,7 +1,7 @@
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Position {
     pub line: usize,
-    pub col:  usize,
+    pub col: usize,
 }
 
 impl Position {
@@ -24,11 +24,11 @@ impl Ord for Position {
 
 #[derive(Debug, Clone, Default)]
 pub struct Cursor {
-    pub pos:         Position,
+    pub pos: Position,
     /// Preserved during vertical movement so that moving up/down restores column
     pub desired_col: usize,
     /// Visual-mode selection anchor
-    pub anchor:      Option<Position>,
+    pub anchor: Option<Position>,
 }
 
 impl Cursor {
@@ -37,7 +37,7 @@ impl Cursor {
     }
 
     pub fn set(&mut self, line: usize, col: usize) {
-        self.pos         = Position::new(line, col);
+        self.pos = Position::new(line, col);
         self.desired_col = col;
     }
 

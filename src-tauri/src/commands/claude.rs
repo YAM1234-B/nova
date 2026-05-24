@@ -16,12 +16,12 @@ use tokio::io::{AsyncBufReadExt, AsyncReadExt};
 
 #[tauri::command]
 pub async fn claude_cli_chat(
-    app:             tauri::AppHandle,
-    session_id:      String,
-    claude_path:     String,
-    prompt:          String,
-    resume_session:  Option<String>,
-    allowed_tools:   Option<String>,
+    app: tauri::AppHandle,
+    session_id: String,
+    claude_path: String,
+    prompt: String,
+    resume_session: Option<String>,
+    allowed_tools: Option<String>,
 ) -> Result<(), String> {
     let mut args = vec![
         "-p".to_string(),
@@ -57,20 +57,25 @@ pub async fn claude_cli_chat(
     // Collect stderr in the background so stdout reads never block.
     let stderr_task = tokio::spawn(async move {
         let mut buf = String::new();
-        tokio::io::BufReader::new(stderr).read_to_string(&mut buf).await.ok();
+        tokio::io::BufReader::new(stderr)
+            .read_to_string(&mut buf)
+            .await
+            .ok();
         buf
     });
 
     let reader = tokio::io::BufReader::new(stdout);
-    let mut lines       = reader.lines();
-    let mut sent_len    = 0usize;
-    let mut got_result  = false;
+    let mut lines = reader.lines();
+    let mut sent_len = 0usize;
+    let mut got_result = false;
     // Track which tool_use ids we've already emitted (each assistant event
     // carries the full accumulated content, so we'd duplicate without this).
     let mut emitted_tools: std::collections::HashSet<String> = std::collections::HashSet::new();
 
     while let Ok(Some(line)) = lines.next_line().await {
-        let Ok(ev) = serde_json::from_str::<serde_json::Value>(&line) else { continue };
+        let Ok(ev) = serde_json::from_str::<serde_json::Value>(&line) else {
+            continue;
+        };
 
         match ev["type"].as_str() {
             // ── Assistant turn: text, thinking, tool_use ──────────────────────
@@ -82,7 +87,8 @@ pub async fn claude_cli_chat(
                                 if let Some(text) = block["text"].as_str() {
                                     if text.len() > sent_len {
                                         let delta = &text[sent_len..];
-                                        app.emit(&format!("claude-chat-delta-{session_id}"), delta).ok();
+                                        app.emit(&format!("claude-chat-delta-{session_id}"), delta)
+                                            .ok();
                                         sent_len = text.len();
                                     }
                                 }
@@ -91,7 +97,8 @@ pub async fn claude_cli_chat(
                                 // Emit the full (growing) thinking text each tick;
                                 // frontend replaces its thinking state.
                                 if let Some(t) = block["thinking"].as_str() {
-                                    app.emit(&format!("claude-chat-thinking-{session_id}"), t).ok();
+                                    app.emit(&format!("claude-chat-thinking-{session_id}"), t)
+                                        .ok();
                                 }
                             }
                             Some("tool_use") => {
@@ -105,29 +112,51 @@ pub async fn claude_cli_chat(
                                     emitted_tools.insert(id.clone());
                                     let name = block["name"].as_str().unwrap_or("tool");
                                     let summary = match name {
-                                        "bash" => block["input"]["command"].as_str()
-                                            .unwrap_or("").chars().take(120).collect::<String>(),
+                                        "bash" => block["input"]["command"]
+                                            .as_str()
+                                            .unwrap_or("")
+                                            .chars()
+                                            .take(120)
+                                            .collect::<String>(),
                                         "str_replace_editor" | "str_replace_based_edit_tool" => {
-                                            let cmd  = block["input"]["command"].as_str().unwrap_or("edit");
-                                            let path = block["input"]["path"].as_str().unwrap_or("");
+                                            let cmd = block["input"]["command"]
+                                                .as_str()
+                                                .unwrap_or("edit");
+                                            let path =
+                                                block["input"]["path"].as_str().unwrap_or("");
                                             format!("{cmd} {path}")
                                         }
-                                        "read_file" | "view" => block["input"]["path"].as_str()
-                                            .unwrap_or("").to_string(),
-                                        "write_file" | "create" => block["input"]["path"].as_str()
-                                            .unwrap_or("").to_string(),
+                                        "read_file" | "view" => block["input"]["path"]
+                                            .as_str()
+                                            .unwrap_or("")
+                                            .to_string(),
+                                        "write_file" | "create" => block["input"]["path"]
+                                            .as_str()
+                                            .unwrap_or("")
+                                            .to_string(),
                                         _ => serde_json::to_string(&block["input"])
-                                            .unwrap_or_default().chars().take(100).collect::<String>(),
+                                            .unwrap_or_default()
+                                            .chars()
+                                            .take(100)
+                                            .collect::<String>(),
                                     };
-                                    let diff_old: Option<String> = if matches!(name, "str_replace_editor" | "str_replace_based_edit_tool")
-                                        && block["input"]["command"].as_str() == Some("str_replace")
+                                    let diff_old: Option<String> = if matches!(
+                                        name,
+                                        "str_replace_editor" | "str_replace_based_edit_tool"
+                                    ) && block["input"]["command"]
+                                        .as_str()
+                                        == Some("str_replace")
                                     {
-                                        block["input"]["old_str"].as_str().map(|s| s.chars().take(1500).collect())
+                                        block["input"]["old_str"]
+                                            .as_str()
+                                            .map(|s| s.chars().take(1500).collect())
                                     } else {
                                         None
                                     };
                                     let diff_new: Option<String> = if diff_old.is_some() {
-                                        block["input"]["new_str"].as_str().map(|s| s.chars().take(1500).collect())
+                                        block["input"]["new_str"]
+                                            .as_str()
+                                            .map(|s| s.chars().take(1500).collect())
                                     } else {
                                         None
                                     };
@@ -138,7 +167,11 @@ pub async fn claude_cli_chat(
                                         "diffOld": diff_old,
                                         "diffNew": diff_new,
                                     });
-                                    app.emit(&format!("claude-chat-tool-{session_id}"), payload.to_string()).ok();
+                                    app.emit(
+                                        &format!("claude-chat-tool-{session_id}"),
+                                        payload.to_string(),
+                                    )
+                                    .ok();
                                 }
                             }
                             _ => {}
@@ -150,17 +183,30 @@ pub async fn claude_cli_chat(
             Some("user") => {
                 if let Some(content) = ev["message"]["content"].as_array() {
                     for block in content {
-                        if block["type"].as_str() != Some("tool_result") { continue; }
+                        if block["type"].as_str() != Some("tool_result") {
+                            continue;
+                        }
                         let tool_use_id = block["tool_use_id"].as_str().unwrap_or("").to_string();
-                        if tool_use_id.is_empty() { continue; }
+                        if tool_use_id.is_empty() {
+                            continue;
+                        }
                         // Content can be a plain string or an array of content blocks
                         let result_text = match &block["content"] {
                             serde_json::Value::String(s) => s.chars().take(800).collect::<String>(),
-                            serde_json::Value::Array(arr) => arr.iter()
-                                .filter_map(|b| if b["type"] == "text" { b["text"].as_str() } else { None })
+                            serde_json::Value::Array(arr) => arr
+                                .iter()
+                                .filter_map(|b| {
+                                    if b["type"] == "text" {
+                                        b["text"].as_str()
+                                    } else {
+                                        None
+                                    }
+                                })
                                 .collect::<Vec<_>>()
                                 .join("\n")
-                                .chars().take(800).collect::<String>(),
+                                .chars()
+                                .take(800)
+                                .collect::<String>(),
                             _ => String::new(),
                         };
                         let is_error = block["is_error"].as_bool().unwrap_or(false);
@@ -169,7 +215,11 @@ pub async fn claude_cli_chat(
                             "content": result_text,
                             "isError": is_error,
                         });
-                        app.emit(&format!("claude-chat-tool-result-{session_id}"), payload.to_string()).ok();
+                        app.emit(
+                            &format!("claude-chat-tool-result-{session_id}"),
+                            payload.to_string(),
+                        )
+                        .ok();
                     }
                 }
             }
@@ -177,11 +227,13 @@ pub async fn claude_cli_chat(
             Some("result") => {
                 got_result = true;
                 if let Some(sid) = ev["session_id"].as_str() {
-                    app.emit(&format!("claude-chat-session-{session_id}"), sid).ok();
+                    app.emit(&format!("claude-chat-session-{session_id}"), sid)
+                        .ok();
                 }
                 if ev["subtype"] == "error" {
                     let msg = ev["error"]["message"].as_str().unwrap_or("unknown error");
-                    app.emit(&format!("claude-chat-error-{session_id}"), msg).ok();
+                    app.emit(&format!("claude-chat-error-{session_id}"), msg)
+                        .ok();
                 }
                 if !ev["usage"].is_null() {
                     let usage = serde_json::json!({
@@ -190,7 +242,11 @@ pub async fn claude_cli_chat(
                         "cacheCreationTokens": ev["usage"]["cache_creation_input_tokens"].as_u64().unwrap_or(0),
                         "cacheReadTokens":     ev["usage"]["cache_read_input_tokens"].as_u64().unwrap_or(0),
                     });
-                    app.emit(&format!("claude-chat-usage-{session_id}"), usage.to_string()).ok();
+                    app.emit(
+                        &format!("claude-chat-usage-{session_id}"),
+                        usage.to_string(),
+                    )
+                    .ok();
                 }
                 app.emit(&format!("claude-chat-done-{session_id}"), "").ok();
                 break;
@@ -207,7 +263,8 @@ pub async fn claude_cli_chat(
         } else {
             "claude exited without a response — check that claude CLI is authenticated".to_string()
         };
-        app.emit(&format!("claude-chat-error-{session_id}"), &err).ok();
+        app.emit(&format!("claude-chat-error-{session_id}"), &err)
+            .ok();
         app.emit(&format!("claude-chat-done-{session_id}"), "").ok();
     }
 
@@ -219,7 +276,7 @@ pub async fn claude_cli_chat(
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ApiMessage {
-    pub role:    String,
+    pub role: String,
     pub content: String,
 }
 
@@ -231,12 +288,12 @@ pub struct ApiMessage {
 ///   `claude-api-error-{session_id}`  → String  (any error)
 #[tauri::command]
 pub async fn claude_api_chat(
-    app:        tauri::AppHandle,
+    app: tauri::AppHandle,
     session_id: String,
-    api_key:    String,
-    model:      String,
-    system:     String,
-    messages:   Vec<ApiMessage>,
+    api_key: String,
+    model: String,
+    system: String,
+    messages: Vec<ApiMessage>,
 ) -> Result<(), String> {
     let body = serde_json::json!({
         "model":      model,
@@ -252,34 +309,37 @@ pub async fn claude_api_chat(
     let client = reqwest::Client::new();
     let resp = match client
         .post("https://api.anthropic.com/v1/messages")
-        .header("x-api-key",           &api_key)
-        .header("anthropic-version",    "2023-06-01")
-        .header("content-type",         "application/json")
+        .header("x-api-key", &api_key)
+        .header("anthropic-version", "2023-06-01")
+        .header("content-type", "application/json")
         .json(&body)
         .send()
         .await
     {
-        Ok(r)  => r,
+        Ok(r) => r,
         Err(e) => {
-            app.emit(&format!("claude-api-error-{session_id}"), e.to_string()).ok();
+            app.emit(&format!("claude-api-error-{session_id}"), e.to_string())
+                .ok();
             return Ok(());
         }
     };
 
     if !resp.status().is_success() {
         let err = resp.text().await.unwrap_or_else(|e| e.to_string());
-        app.emit(&format!("claude-api-error-{session_id}"), err).ok();
+        app.emit(&format!("claude-api-error-{session_id}"), err)
+            .ok();
         return Ok(());
     }
 
     let mut stream = resp.bytes_stream();
-    let mut buf    = String::new();
+    let mut buf = String::new();
 
     'outer: while let Some(chunk) = stream.next().await {
         let chunk = match chunk {
-            Ok(c)  => c,
+            Ok(c) => c,
             Err(e) => {
-                app.emit(&format!("claude-api-error-{session_id}"), e.to_string()).ok();
+                app.emit(&format!("claude-api-error-{session_id}"), e.to_string())
+                    .ok();
                 return Ok(());
             }
         };
@@ -290,15 +350,20 @@ pub async fn claude_api_chat(
             let line = buf[..pos].trim_end_matches('\r').to_string();
             buf.drain(..=pos);
 
-            let Some(data) = line.strip_prefix("data: ") else { continue };
-            if data == "[DONE]" { break 'outer; }
+            let Some(data) = line.strip_prefix("data: ") else {
+                continue;
+            };
+            if data == "[DONE]" {
+                break 'outer;
+            }
 
             if let Ok(ev) = serde_json::from_str::<serde_json::Value>(data) {
                 match ev["type"].as_str() {
                     Some("content_block_delta") => {
                         if ev["delta"]["type"] == "text_delta" {
                             if let Some(text) = ev["delta"]["text"].as_str() {
-                                app.emit(&format!("claude-api-delta-{session_id}"), text).ok();
+                                app.emit(&format!("claude-api-delta-{session_id}"), text)
+                                    .ok();
                             }
                         }
                     }
@@ -383,7 +448,8 @@ pub fn find_gemini_path() -> Result<String, String> {
 #[tauri::command]
 pub fn find_codex_path() -> Result<String, String> {
     find_cli("codex").map_err(|_| {
-        "Codex CLI not found.\n\nInstall:\n  npm install -g @openai/codex\n\nThen restart Nova.".to_string()
+        "Codex CLI not found.\n\nInstall:\n  npm install -g @openai/codex\n\nThen restart Nova."
+            .to_string()
     })
 }
 

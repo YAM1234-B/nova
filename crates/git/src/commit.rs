@@ -14,8 +14,8 @@ impl<'a> Committer<'a> {
     /// Stage all tracked changes and commit with `message`.
     pub fn commit_staged(&self, message: &str) -> Result<git2::Oid> {
         let mut index = self.repo.repo.index().context("opening index")?;
-        let tree_id   = index.write_tree().context("writing tree")?;
-        let tree      = self.repo.repo.find_tree(tree_id).context("finding tree")?;
+        let tree_id = index.write_tree().context("writing tree")?;
+        let tree = self.repo.repo.find_tree(tree_id).context("finding tree")?;
 
         let sig = self
             .repo
@@ -45,7 +45,9 @@ impl<'a> Committer<'a> {
     pub fn stage_and_commit(&self, path: &std::path::Path, message: &str) -> Result<git2::Oid> {
         let mut index = self.repo.repo.index().context("opening index")?;
         let rel = path.strip_prefix(&self.repo.workdir).unwrap_or(path);
-        index.add_path(rel).with_context(|| format!("staging {}", rel.display()))?;
+        index
+            .add_path(rel)
+            .with_context(|| format!("staging {}", rel.display()))?;
         index.write().context("writing index")?;
         self.commit_staged(message)
     }

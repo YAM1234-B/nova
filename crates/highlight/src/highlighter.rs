@@ -12,9 +12,9 @@ use crate::{
 
 /// Per-buffer highlight state.
 pub struct SyntaxTree {
-    pub lang:  Lang,
-    config:    Option<HighlightConfiguration>,
-    parser:    Parser,
+    pub lang: Lang,
+    config: Option<HighlightConfiguration>,
+    parser: Parser,
 }
 
 impl SyntaxTree {
@@ -37,7 +37,11 @@ impl SyntaxTree {
             cfg.configure(HIGHLIGHT_NAMES);
             Some(cfg)
         });
-        Self { lang, config, parser }
+        Self {
+            lang,
+            config,
+            parser,
+        }
     }
 
     /// Re-parse the full source after an edit.
@@ -50,21 +54,21 @@ impl SyntaxTree {
     pub fn highlight_line(&self, line_text: &str, source: &str) -> Vec<Span<'static>> {
         let config = match &self.config {
             Some(c) => c,
-            None    => return vec![Span::raw(line_text.to_string())],
+            None => return vec![Span::raw(line_text.to_string())],
         };
 
-        let mut hl   = Highlighter::new();
-        let events   = match hl.highlight(config, source.as_bytes(), None, |_| None) {
+        let mut hl = Highlighter::new();
+        let events = match hl.highlight(config, source.as_bytes(), None, |_| None) {
             Ok(it) => it,
             Err(_) => return vec![Span::raw(line_text.to_string())],
         };
 
         // Byte range of this line inside `source`
         let line_start = find_line_start(source, line_text);
-        let line_end   = line_start + line_text.len();
+        let line_end = line_start + line_text.len();
 
-        let mut spans:   Vec<Span<'static>> = Vec::new();
-        let mut style    = default_fg();
+        let mut spans: Vec<Span<'static>> = Vec::new();
+        let mut style = default_fg();
         let mut byte_pos = line_start;
 
         for event in events.flatten() {
@@ -101,7 +105,11 @@ impl SyntaxTree {
     }
 }
 
-pub fn highlight_line_to_ratatui(tree: &SyntaxTree, line_text: &str, source: &str) -> Line<'static> {
+pub fn highlight_line_to_ratatui(
+    tree: &SyntaxTree,
+    line_text: &str,
+    source: &str,
+) -> Line<'static> {
     Line::from(tree.highlight_line(line_text, source))
 }
 

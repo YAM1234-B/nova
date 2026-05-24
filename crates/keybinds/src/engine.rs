@@ -7,38 +7,53 @@ use crate::action::Action;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct KeyBinding {
-    pub code:      KeyCode,
+    pub code: KeyCode,
     pub modifiers: KeyModifiers,
 }
 
 impl KeyBinding {
     pub fn plain(code: KeyCode) -> Self {
-        Self { code, modifiers: KeyModifiers::NONE }
+        Self {
+            code,
+            modifiers: KeyModifiers::NONE,
+        }
     }
 
     pub fn ctrl(code: KeyCode) -> Self {
-        Self { code, modifiers: KeyModifiers::CONTROL }
+        Self {
+            code,
+            modifiers: KeyModifiers::CONTROL,
+        }
     }
 
     pub fn shift(code: KeyCode) -> Self {
-        Self { code, modifiers: KeyModifiers::SHIFT }
+        Self {
+            code,
+            modifiers: KeyModifiers::SHIFT,
+        }
     }
 
     pub fn ctrl_shift(code: KeyCode) -> Self {
-        Self { code, modifiers: KeyModifiers::CONTROL | KeyModifiers::SHIFT }
+        Self {
+            code,
+            modifiers: KeyModifiers::CONTROL | KeyModifiers::SHIFT,
+        }
     }
 
     pub fn from_event(ev: &KeyEvent) -> Self {
-        Self { code: ev.code, modifiers: ev.modifiers }
+        Self {
+            code: ev.code,
+            modifiers: ev.modifiers,
+        }
     }
 }
 
 pub type KeyMap = HashMap<KeyBinding, Action>;
 
 pub struct KeyEngine {
-    pub normal_map:  KeyMap,
-    pub insert_map:  KeyMap,
-    pub visual_map:  KeyMap,
+    pub normal_map: KeyMap,
+    pub insert_map: KeyMap,
+    pub visual_map: KeyMap,
     pub command_map: KeyMap,
     /// Buffer for multi-key sequences (e.g. `g g`, `d d`).
     pending: Option<KeyCode>,
@@ -47,11 +62,11 @@ pub struct KeyEngine {
 impl KeyEngine {
     pub fn new(normal: KeyMap, insert: KeyMap, visual: KeyMap, command: KeyMap) -> Self {
         Self {
-            normal_map:  normal,
-            insert_map:  insert,
-            visual_map:  visual,
+            normal_map: normal,
+            insert_map: insert,
+            visual_map: visual,
             command_map: command,
-            pending:     None,
+            pending: None,
         }
     }
 
@@ -86,7 +101,8 @@ impl KeyEngine {
 
         // Sequences that require a second key
         if let KeyCode::Char(c) = ev.code {
-            if matches!(c, 'g' | 'd' | 'y' | 'c' | 'm' | '\'') && ev.modifiers == KeyModifiers::NONE {
+            if matches!(c, 'g' | 'd' | 'y' | 'c' | 'm' | '\'') && ev.modifiers == KeyModifiers::NONE
+            {
                 self.pending = Some(KeyCode::Char(c));
                 return Action::None;
             }
@@ -103,21 +119,21 @@ impl KeyEngine {
             return action.clone();
         }
         match ev.code {
-            KeyCode::Char(c) if ev.modifiers == KeyModifiers::NONE
-                             || ev.modifiers == KeyModifiers::SHIFT =>
+            KeyCode::Char(c)
+                if ev.modifiers == KeyModifiers::NONE || ev.modifiers == KeyModifiers::SHIFT =>
             {
                 Action::InsertChar(c)
             }
-            KeyCode::Enter     => Action::InsertNewline,
-            KeyCode::Tab       => Action::InsertTab,
+            KeyCode::Enter => Action::InsertNewline,
+            KeyCode::Tab => Action::InsertTab,
             KeyCode::Backspace => Action::Backspace,
-            KeyCode::Delete    => Action::Delete,
-            KeyCode::Left      => Action::MoveLeft,
-            KeyCode::Right     => Action::MoveRight,
-            KeyCode::Up        => Action::MoveUp,
-            KeyCode::Down      => Action::MoveDown,
-            KeyCode::Home      => Action::MoveLineStart,
-            KeyCode::End       => Action::MoveLineEnd,
+            KeyCode::Delete => Action::Delete,
+            KeyCode::Left => Action::MoveLeft,
+            KeyCode::Right => Action::MoveRight,
+            KeyCode::Up => Action::MoveUp,
+            KeyCode::Down => Action::MoveDown,
+            KeyCode::Home => Action::MoveLineStart,
+            KeyCode::End => Action::MoveLineEnd,
             _ => Action::None,
         }
     }
@@ -131,7 +147,7 @@ impl KeyEngine {
             KeyCode::Char('j') => Action::MoveDown,
             KeyCode::Char('k') => Action::MoveUp,
             KeyCode::Char('l') => Action::MoveRight,
-            KeyCode::Esc       => Action::EnterNormalMode,
+            KeyCode::Esc => Action::EnterNormalMode,
             _ => Action::None,
         }
     }
@@ -141,14 +157,14 @@ impl KeyEngine {
             return action.clone();
         }
         match ev.code {
-            KeyCode::Char(c) if ev.modifiers == KeyModifiers::NONE
-                             || ev.modifiers == KeyModifiers::SHIFT =>
+            KeyCode::Char(c)
+                if ev.modifiers == KeyModifiers::NONE || ev.modifiers == KeyModifiers::SHIFT =>
             {
                 Action::InsertChar(c)
             }
             KeyCode::Backspace => Action::Backspace,
-            KeyCode::Enter     => Action::InsertNewline,
-            KeyCode::Esc       => Action::EnterNormalMode,
+            KeyCode::Enter => Action::InsertNewline,
+            KeyCode::Esc => Action::EnterNormalMode,
             _ => Action::None,
         }
     }

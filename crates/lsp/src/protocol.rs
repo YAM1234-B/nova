@@ -2,13 +2,18 @@ use anyhow::{bail, Context, Result};
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
 use tokio::process::ChildStdin;
 
-
 /// Write a JSON-RPC message with the LSP Content-Length framing.
 pub async fn write_message(stdin: &mut ChildStdin, msg: &serde_json::Value) -> Result<()> {
     let body = serde_json::to_string(msg).context("serialising LSP message")?;
     let header = format!("Content-Length: {}\r\n\r\n", body.len());
-    stdin.write_all(header.as_bytes()).await.context("writing LSP header")?;
-    stdin.write_all(body.as_bytes()).await.context("writing LSP body")?;
+    stdin
+        .write_all(header.as_bytes())
+        .await
+        .context("writing LSP header")?;
+    stdin
+        .write_all(body.as_bytes())
+        .await
+        .context("writing LSP body")?;
     stdin.flush().await.context("flushing LSP stdin")?;
     Ok(())
 }
@@ -21,7 +26,10 @@ pub async fn read_message<R: tokio::io::AsyncRead + Unpin>(
     let mut content_length: Option<usize> = None;
     loop {
         let mut line = String::new();
-        let n = reader.read_line(&mut line).await.context("reading LSP header line")?;
+        let n = reader
+            .read_line(&mut line)
+            .await
+            .context("reading LSP header line")?;
         if n == 0 {
             bail!("LSP server closed the connection");
         }
@@ -39,7 +47,10 @@ pub async fn read_message<R: tokio::io::AsyncRead + Unpin>(
     }
     let len = content_length.context("missing Content-Length header")?;
     let mut buf = vec![0u8; len];
-    reader.read_exact(&mut buf).await.context("reading LSP body")?;
+    reader
+        .read_exact(&mut buf)
+        .await
+        .context("reading LSP body")?;
     let value = serde_json::from_slice(&buf).context("parsing LSP JSON")?;
     Ok(value)
 }

@@ -19,11 +19,11 @@ fn procs() -> &'static Mutex<HashMap<u32, Child>> {
 
 #[derive(serde::Serialize)]
 pub struct JupyterInfo {
-    pub port:     u16,
-    pub token:    String,
-    pub pid:      u32,
+    pub port: u16,
+    pub token: String,
+    pub pid: u32,
     /// "lab" or "notebook"
-    pub mode:     String,
+    pub mode: String,
     /// Notebook filename (basename), used to build the URL
     pub filename: String,
 }
@@ -55,10 +55,7 @@ fn find_jupyter() -> Result<PathBuf, String> {
     let home = dirs::home_dir().unwrap_or_default();
 
     // Absolute paths to try (common conda / brew installs)
-    let abs: &[&str] = &[
-        "/usr/local/bin/jupyter",
-        "/opt/homebrew/bin/jupyter",
-    ];
+    let abs: &[&str] = &["/usr/local/bin/jupyter", "/opt/homebrew/bin/jupyter"];
 
     let home_prefixes: &[&str] = &[
         "miniforge3/bin/jupyter",
@@ -107,12 +104,10 @@ fn find_jupyter() -> Result<PathBuf, String> {
         }
     }
 
-    Err(
-        "Jupyter is not installed or not on PATH.\n\
+    Err("Jupyter is not installed or not on PATH.\n\
          Install with:  pip install jupyterlab\n\
          or:            conda install -c conda-forge jupyterlab"
-            .to_string(),
-    )
+        .to_string())
 }
 
 /// Return `true` if `jupyter lab` is available at the given binary path.
@@ -149,8 +144,11 @@ pub async fn start_jupyter_server(notebook_path: String) -> Result<JupyterInfo, 
 }
 
 fn start_blocking(notebook_path: String) -> Result<JupyterInfo, String> {
-    let nb_path  = PathBuf::from(&notebook_path);
-    let dir      = nb_path.parent().ok_or("Invalid notebook path")?.to_path_buf();
+    let nb_path = PathBuf::from(&notebook_path);
+    let dir = nb_path
+        .parent()
+        .ok_or("Invalid notebook path")?
+        .to_path_buf();
     let filename = nb_path
         .file_name()
         .ok_or("No filename")?
@@ -158,8 +156,8 @@ fn start_blocking(notebook_path: String) -> Result<JupyterInfo, String> {
         .into_owned();
 
     let jupyter = find_jupyter()?;
-    let port    = free_port()?;
-    let token   = make_token();
+    let port = free_port()?;
+    let token = make_token();
 
     let (subcommand, mode, app_prefix, root_arg) = if has_lab(&jupyter) {
         (
@@ -177,10 +175,10 @@ fn start_blocking(notebook_path: String) -> Result<JupyterInfo, String> {
         )
     };
 
-    let token_flag       = format!("--{app_prefix}.token={token}");
-    let allow_flag       = format!("--{app_prefix}.allow_origin=*");
-    let xsrf_flag        = format!("--{app_prefix}.disable_check_xsrf=True");
-    let port_flag        = format!("--port={port}");
+    let token_flag = format!("--{app_prefix}.token={token}");
+    let allow_flag = format!("--{app_prefix}.allow_origin=*");
+    let xsrf_flag = format!("--{app_prefix}.disable_check_xsrf=True");
+    let port_flag = format!("--port={port}");
 
     let mut child = Command::new(&jupyter)
         .args([
