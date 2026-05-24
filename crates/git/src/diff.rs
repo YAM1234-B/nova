@@ -66,6 +66,7 @@ impl<'a> DiffManager<'a> {
         // Cell allows both closures to share this counter without aliased &mut refs.
         let hunk_count = Cell::new(0usize);
         // (hunk_index, old_lineno, new_lineno, origin, content)
+        #[allow(clippy::type_complexity)]
         let mut raw_lines: Vec<(usize, Option<u32>, Option<u32>, char, String)> = Vec::new();
 
         diff.foreach(
