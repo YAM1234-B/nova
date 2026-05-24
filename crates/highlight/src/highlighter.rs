@@ -1,8 +1,4 @@
-use ratatui::{
-    style::Style,
-    text::{Line, Span},
-};
-use tree_sitter::Parser;
+use ratatui::text::{Line, Span};
 use tree_sitter_highlight::{Highlight, HighlightConfiguration, HighlightEvent, Highlighter};
 
 use crate::{
@@ -14,14 +10,11 @@ use crate::{
 pub struct SyntaxTree {
     pub lang: Lang,
     config: Option<HighlightConfiguration>,
-    parser: Parser,
 }
 
 impl SyntaxTree {
     pub fn new(lang: Lang) -> Self {
-        let mut parser = Parser::new();
         let config = lang.tree_sitter_language().and_then(|ts_lang| {
-            parser.set_language(&ts_lang).ok()?;
             let query = lang.highlight_query();
             if query.is_empty() {
                 return None;
@@ -37,11 +30,7 @@ impl SyntaxTree {
             cfg.configure(HIGHLIGHT_NAMES);
             Some(cfg)
         });
-        Self {
-            lang,
-            config,
-            parser,
-        }
+        Self { lang, config }
     }
 
     /// Re-parse the full source after an edit.
