@@ -1,27 +1,27 @@
 import { useState, useEffect, useRef } from "react";
-import { Terminal, GitBranch, FolderOpen, Save, X, Search, FilePlus, FolderPlus, PanelsTopLeft,PanelRight } from "lucide-react";
+import { Terminal, GitBranch, FolderOpen, Save, X, Search, FilePlus, FolderPlus, PanelsTopLeft, PanelRight } from "lucide-react";
 import { useStore } from "../store";
 
 interface Command {
-  id:          string;
-  label:       string;
+  id: string;
+  label: string;
   description: string;
-  icon:        React.ReactNode;
-  action:      () => void;
+  icon: React.ReactNode;
+  action: () => void;
 }
 
 export function CommandPalette() {
-  const [query,   setQuery]   = useState("");
-  const [cursor,  setCursor]  = useState(0);
+  const [query, setQuery] = useState("");
+  const [cursor, setCursor] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const setOpen        = useStore((s) => s.setPaletteOpen);
-  const setFuzzyOpen   = useStore((s) => s.setFuzzyOpen);
+  const setOpen = useStore((s) => s.setPaletteOpen);
+  const setFuzzyOpen = useStore((s) => s.setFuzzyOpen);
   const toggleFileTree = useStore((s) => s.toggleFileTree);
   const toggleTerminal = useStore((s) => s.toggleTerminal);
   const toggleGitPanel = useStore((s) => s.toggleGitPanel);
-  const saveTab        = useStore((s) => s.saveTab);
-  const showFileTree   = useStore((s) => s.showFileTree);
+  const saveTab = useStore((s) => s.saveTab);
+  const showFileTree = useStore((s) => s.showFileTree);
   const splitEditor = useStore((s) => s.splitEditor);
   const closeSplit = useStore((s) => s.closeSplit);
 
@@ -37,9 +37,9 @@ export function CommandPalette() {
       description: "Save the current editor file",
       icon: <Save size={14} />,
       action: () => {
-        const s   = useStore.getState();
+        const s = useStore.getState();
         const key = s.focusedPane === "right" && s.rightPane ? "right" : "left";
-        const p   = key === "right" ? s.rightPane! : s.leftPane;
+        const p = key === "right" ? s.rightPane! : s.leftPane;
         const tab = p.tabs[p.activeIdx];
         if (tab) saveTab(tab.path);
         setOpen(false);
@@ -147,10 +147,10 @@ export function CommandPalette() {
 
   const matches = query
     ? commands.filter(
-        (c) =>
-          c.label.toLowerCase().includes(query.toLowerCase()) ||
-          c.description.toLowerCase().includes(query.toLowerCase())
-      )
+      (c) =>
+        c.label.toLowerCase().includes(query.toLowerCase()) ||
+        c.description.toLowerCase().includes(query.toLowerCase())
+    )
     : commands;
 
   useEffect(() => {
@@ -163,18 +163,18 @@ export function CommandPalette() {
   const confirm = () => matches[cursor]?.action();
 
   const onKey = (e: React.KeyboardEvent) => {
-    if (e.key === "Escape")    { setOpen(false); return; }
+    if (e.key === "Escape") { setOpen(false); return; }
     if (e.key === "ArrowDown") { e.preventDefault(); setCursor((c) => Math.min(c + 1, matches.length - 1)); }
-    if (e.key === "ArrowUp")   { e.preventDefault(); setCursor((c) => Math.max(c - 1, 0)); }
-    if (e.key === "Enter")     { confirm(); }
+    if (e.key === "ArrowUp") { e.preventDefault(); setCursor((c) => Math.max(c - 1, 0)); }
+    if (e.key === "Enter") { confirm(); }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[12vh] bg-black/50 fade-in"
-         onClick={() => setOpen(false)}>
+      onClick={() => setOpen(false)}>
       <div className="w-[580px] border border-editor-border rounded-xl shadow-2xl overflow-hidden fade-in"
-           style={{ background: "rgb(var(--c-sidebar) / 0.92)", backdropFilter: "blur(24px) saturate(1.6)" }}
-           onClick={(e) => e.stopPropagation()}>
+        style={{ background: "rgb(var(--c-sidebar) / 0.92)", backdropFilter: "blur(24px) saturate(1.6)" }}
+        onClick={(e) => e.stopPropagation()}>
         {/* Input */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-editor-border">
           <span className="text-editor-comment font-mono text-sm">&gt;</span>
