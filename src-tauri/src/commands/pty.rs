@@ -60,6 +60,7 @@ impl PtyState {
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub async fn pty_spawn(
     app: AppHandle,
     state: State<'_, PtyState>,

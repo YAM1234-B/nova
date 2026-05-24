@@ -71,7 +71,7 @@ pub async fn claude_cli_chat(
     // Track which tool_use ids we've already emitted (each assistant event
     // carries the full accumulated content, so we'd duplicate without this).
     let mut emitted_tools: std::collections::HashSet<String> = std::collections::HashSet::new();
-
+    #[allow(clippy::while_let_loop)]
     while let Ok(Some(line)) = lines.next_line().await {
         let Ok(ev) = serde_json::from_str::<serde_json::Value>(&line) else {
             continue;
@@ -82,6 +82,7 @@ pub async fn claude_cli_chat(
             Some("assistant") => {
                 if let Some(content) = ev["message"]["content"].as_array() {
                     for block in content {
+                        #[allow(clippy::collapsible_match)]
                         match block["type"].as_str() {
                             Some("text") => {
                                 if let Some(text) = block["text"].as_str() {

@@ -313,6 +313,7 @@ pub async fn git_stash_list(repo_path: String) -> Result<Vec<GitStash>, String> 
                 .strip_prefix("On ")
                 .or_else(|| msg.strip_prefix("WIP on "))
             {
+                #[allow(clippy::needless_splitn)]
                 rest.splitn(2, ':').next().unwrap_or("").trim().to_string()
             } else {
                 String::new()
@@ -406,7 +407,7 @@ pub async fn git_ahead_behind(repo_path: String, branch: String) -> Result<Ahead
             behind: 0,
         }),
         Ok(out) => {
-            let parts: Vec<&str> = out.trim().split_whitespace().collect();
+            let parts: Vec<&str> = out.split_whitespace().collect();
             let behind = parts.first().and_then(|s| s.parse().ok()).unwrap_or(0);
             let ahead = parts.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
             Ok(AheadBehind { ahead, behind })
@@ -459,7 +460,7 @@ pub struct GraphCommit {
 ///
 /// The `known` HashSet gives O(1) parent reachability checks so lanes aren't opened
 /// for commits outside the current window.
-fn assign_lanes(commits: &mut Vec<GraphCommit>) {
+fn assign_lanes(commits: &mut [GraphCommit]) {
     // O(n) build: owned strings so we don't hold a borrow while mutating commits
     let known: std::collections::HashSet<String> =
         commits.iter().map(|c| c.full_oid.clone()).collect();
@@ -467,6 +468,7 @@ fn assign_lanes(commits: &mut Vec<GraphCommit>) {
     // lanes[i] = Some(full_oid) → lane i is waiting for that commit
     let mut lanes: Vec<Option<String>> = Vec::new();
 
+    #[allow(clippy::needless_range_loop)]
     for i in 0..commits.len() {
         // Clone to avoid borrow conflict with mutable `commits[i]` writes below
         let full_oid = commits[i].full_oid.clone();

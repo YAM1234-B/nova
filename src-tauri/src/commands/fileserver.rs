@@ -73,6 +73,7 @@ async fn handle_connection(stream: tokio::net::TcpStream, base_dir: PathBuf) {
     }
 
     // Drain remaining headers to keep the connection clean
+    #[allow(clippy::while_let_loop)]
     loop {
         let mut line = String::new();
         match reader.read_line(&mut line).await {
